@@ -7,6 +7,8 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
+import * as path from "path";
 
 // Types for Sora API
 interface VideoJob {
@@ -274,6 +276,33 @@ const tools: Tool[] = [
       required: ["video_id"],
     },
   },
+  {
+    name: "save_video",
+    description:
+      "Download and save a completed video to a local file. This handles authentication internally so the API key is not exposed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        video_id: {
+          type: "string",
+          description: "The ID of the completed video to save.",
+        },
+        output_path: {
+          type: "string",
+          description:
+            "The local file path where the video should be saved. If not provided, saves to current directory with video ID as filename.",
+        },
+        variant: {
+          type: "string",
+          enum: ["video", "thumbnail", "spritesheet"],
+          description:
+            "Type of content to download. 'video' for MP4, 'thumbnail' for preview image, 'spritesheet' for frame overview.",
+          default: "video",
+        },
+      },
+      required: ["video_id"],
+    },
+  },
 ];
 
 // Tool handlers
@@ -528,6 +557,89 @@ async function handleWaitForVideo(args: {
   );
 }
 
+async function handleSaveVideo(args: {
+  video_id: string;
+  output_path?: string;
+  variant?: string;
+}): Promise<string> {
+  const variant = args.variant || "video";
+
+  // First check if video is completed
+  const statusResponse = await makeApiRequest(`/videos/${args.video_id}`);
+  if (!statusResponse.ok) {
+    const error = await statusResponse.text();
+    throw new Error(`Failed to get video status: ${statusResponse.status} - ${error}`);
+  }
+
+  const video: VideoJob = await statusResponse.json();
+  if (video.status !== "completed") {
+    throw new Error(
+      `Video is not ready for download. Current status: ${video.status}`
+    );
+  }
+
+  // Determine file extension based on variant
+  const extensionMap: Record<string, string> = {
+    video: "mp4",
+    thumbnail: "jpg",
+    spritesheet: "jpg",
+  };
+  const extension = extensionMap[variant] || "mp4";
+
+  // Determine output path
+  let outputPath = args.output_path;
+  if (!outputPath) {
+    outputPath = `${args.video_id}.${extension}`;
+  }
+
+  // Resolve to absolute path
+  const absolutePath = path.resolve(outputPath);
+
+  // Download the video content
+  const url = `/videos/${args.video_id}/content?variant=${variant}`;
+  const response = await makeApiRequest(url);
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to download video: ${response.status} - ${error}`);
+  }
+
+  // Get the content as a buffer and write to file
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  // Ensure directory exists
+  const dir = path.dirname(absolutePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(absolutePath, buffer);
+
+  const stats = fs.statSync(absolutePath);
+
+  return JSON.stringify(
+    {
+      success: true,
+      video_id: args.video_id,
+      variant: variant,
+      output_path: absolutePath,
+      file_size_bytes: stats.size,
+      file_size_human: formatFileSize(stats.size),
+      message: `Video saved successfully to ${absolutePath}`,
+    },
+    null,
+    2
+  );
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
 // Create and configure the server
 const server = new Server(
   {
@@ -590,6 +702,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "wait_for_video":
         result = await handleWaitForVideo(
           args as Parameters<typeof handleWaitForVideo>[0]
+        );
+        break;
+      case "save_video":
+        result = await handleSaveVideo(
+          args as Parameters<typeof handleSaveVideo>[0]
         );
         break;
       default:

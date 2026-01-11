@@ -2,6 +2,10 @@
 
 An MCP (Model Context Protocol) server for OpenAI's Sora video generation API. This server allows AI assistants to generate, manage, and download AI-generated videos using OpenAI's Sora models.
 
+## Demo
+
+![Demo](demo.gif)
+
 ## Features
 
 - **Create videos** from text prompts using Sora-2 or Sora-2-Pro models
