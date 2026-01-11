@@ -93,9 +93,9 @@ const tools: Tool[] = [
         },
         seconds: {
           type: "number",
-          enum: [5, 10, 15, 20],
-          description: "Duration of the video in seconds. Default is 5.",
-          default: 5,
+          enum: [4, 8, 12],
+          description: "Duration of the video in seconds. Default is 4.",
+          default: 4,
         },
       },
       required: ["prompt"],
@@ -144,9 +144,9 @@ const tools: Tool[] = [
         },
         seconds: {
           type: "number",
-          enum: [5, 10, 15, 20],
+          enum: [4, 8, 12],
           description: "Duration of the video in seconds.",
-          default: 5,
+          default: 4,
         },
       },
       required: ["prompt"],
@@ -287,7 +287,7 @@ async function handleCreateVideo(args: {
   formData.append("prompt", args.prompt);
   formData.append("model", args.model || "sora-2");
   formData.append("size", args.size || "1280x720");
-  formData.append("seconds", String(args.seconds || 5));
+  formData.append("seconds", String(args.seconds || 4));
 
   const response = await makeApiRequest("/videos", {
     method: "POST",
@@ -315,7 +315,7 @@ async function handleCreateVideoWithImage(args: {
   formData.append("prompt", args.prompt);
   formData.append("model", args.model || "sora-2");
   formData.append("size", args.size || "1280x720");
-  formData.append("seconds", String(args.seconds || 5));
+  formData.append("seconds", String(args.seconds || 4));
 
   if (args.image_url) {
     // Fetch the image and add it to form data
