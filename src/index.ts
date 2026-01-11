@@ -83,13 +83,7 @@ const tools: Tool[] = [
         },
         size: {
           type: "string",
-          enum: [
-            "1920x1080",
-            "1080x1920",
-            "1280x720",
-            "720x1280",
-            "1024x1024",
-          ],
+          enum: ["1280x720", "720x1280", "1792x1024", "1024x1792"],
           description: "Resolution of the output video. Default is 1280x720.",
           default: "1280x720",
         },
@@ -133,13 +127,7 @@ const tools: Tool[] = [
         },
         size: {
           type: "string",
-          enum: [
-            "1920x1080",
-            "1080x1920",
-            "1280x720",
-            "720x1280",
-            "1024x1024",
-          ],
+          enum: ["1280x720", "720x1280", "1792x1024", "1024x1792"],
           description:
             "Resolution of the output video. Should match the input image aspect ratio.",
           default: "1280x720",
