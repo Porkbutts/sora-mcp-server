@@ -31,22 +31,16 @@ Set your OpenAI API key as an environment variable:
 export OPENAI_API_KEY=your-api-key-here
 ```
 
-## Usage with Claude Desktop
+## Usage with Claude Code
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-```json
-{
-  "mcpServers": {
-    "sora": {
-      "command": "node",
-      "args": ["/path/to/sora-mcp-server/dist/index.js"],
-      "env": {
-        "OPENAI_API_KEY": "your-api-key-here"
-      }
-    }
+```bash
+claude mcp add-json sora '{
+  "command": "node",
+  "args": ["/path/to/sora-mcp-server/dist/index.js"],
+  "env": {
+    "OPENAI_API_KEY": "your-api-key-here"
   }
-}
+}'
 ```
 
 ## Available Tools
